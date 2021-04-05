@@ -16,8 +16,10 @@
     "README.md",
     "LICENSE",
     "luaparse.js",
+    "luaparse.d.ts",
     "bin/luaparse"
   ],
+  "types": "luaparse.d.ts",
   "main": "luaparse.js",
   "bin": "./bin/luaparse",
   "man": "./docs/luaparse.1",
@@ -29,6 +31,7 @@
     "test": "make qa"
   },
   "devDependencies": {
+    "@types/node": "^14.14.37",
     "benchmark": "~1.0.0",
     "complexity-report": "~0.10.5",
     "docco": "^0.8.0",
@@ -39,11 +42,14 @@
     "gulp-jshint": "^2.1.0",
     "gulp-rename": "^1.2.0",
     "gulp-striphtml": "0.0.1",
+    "gulp-typescript": "^6.0.0-alpha.1",
     "gulp-uglify": "^3.0.2",
     "jshint": "^2.11.1",
     "marked": "^0.8.2",
+    "merge2": "^1.4.1",
     "nyc": "^15.1.0",
     "spec": "1.0.1",
-    "testem": "^3.2.0"
+    "testem": "^3.2.0",
+    "typescript": "^4.2.3"
   }
 }

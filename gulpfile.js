@@ -8,6 +8,9 @@ var gulp = require('gulp')
   , addsrc = require('gulp-add-src')
   , striphtml = require('gulp-striphtml')
   , pkg = require('./package.json')
+  , merge = require('merge2')
+  , tsGulp = require("gulp-typescript")
+  , tsProject = tsGulp.createProject("tsconfig.json")
   , banner = [
       '/*!'
     , ' * @license'
@@ -19,14 +22,19 @@ var gulp = require('gulp')
   ].join('\n');
 
 gulp.task('build', function() {
-  return gulp.src('luaparse.js')
-    .pipe(header(banner, { pkg : pkg  } ))
-    .pipe(gulp.dest('dist'))
-    .pipe(uglify({ output: { comments: /^!|@preserve|@license|@cc_on/i } }))
-    .pipe(rename({ extname: '.min.js' }))
-    .pipe(gulp.dest('dist'));
+  const tsResult = tsProject.src()
+    .pipe(tsProject());
+  return merge([
+    tsResult.dts.pipe(gulp.dest('dist')),
+    tsResult.js.pipe(header(banner, { pkg : pkg  } ))
+      .pipe(gulp.dest('dist'))
+      .pipe(uglify({ output: { comments: /^!|@preserve|@license|@cc_on/i } }))
+      .pipe(rename({ extname: '.min.js' }))
+      .pipe(gulp.dest('dist'))
+  ]);
 });
 
+// TODO: use eslint
 gulp.task('lint', function() {
   return gulp.src([
         'examples/**/*.html'
