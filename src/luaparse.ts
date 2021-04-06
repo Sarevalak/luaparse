@@ -1,3 +1,14 @@
+  import { 
+    LuaAstBuilder, Identifier, LabelStatement, BreakStatement, GotoStatement, Expression,
+    ReturnStatement, IfClauses, IfStatement, Block, IfClause, ElseifClause, ElseClause,
+    WhileStatement, DoStatement, RepeatStatement, LocalStatement, MemberExpression,
+    IndexExpression, AssignmentStatement, CallExpression, CallStatement, VarargLiteral,
+    FunctionDeclaration, FunctionExpression, ForNumericStatement, ForGenericStatement,
+    Chunk, Literal, TableKey, TableKeyString, TableValue, TableConstructorExpression,
+    BinaryOperator, LogicalOperator, BinaryExpression, LogicalExpression, UnaryOperator,
+    UnaryExpression, Indexer, TableCallExpression, StringLiteral, StringCallExpression,
+    Comment, Node, TextRange, Location, Statement, PrimaryExpression 
+  } from "./ast";
 
   export const version = '0.2.1';
 
@@ -110,7 +121,7 @@
   }
 
   function toHex(num: number, digits: number): string {
-    var result = num.toString(16);
+    let result = num.toString(16);
     while (result.length < digits)
       result = '0' + result;
     return result;
@@ -118,7 +129,7 @@
 
   function checkChars(rx: RegExp): (s: string) => string {
     return (s: string): string => {
-      var m = rx.exec(s);
+      const m = rx.exec(s);
       if (!m)
         return s;
       raise(null, errors.invalidCodeUnit, toHex(m[0].charCodeAt(0), 4).toUpperCase());
@@ -223,419 +234,125 @@
   // The default AST structure is inspired by the Mozilla Parser API but can
   // easily be customized by overriding these functions.
 
-  export type Block = (LuaNode | null | undefined)[];
-
-  export interface LuaNode {
-    type: string,
-    [prop: string]: any;
-  }
-
-  export interface LuaExpression extends LuaNode { }
-
-  export interface LuaStatement extends LuaNode { }
-
-  export interface LabelStatementNode extends LuaStatement {
-    type: "LabelStatement",
-    label: IdentifierNode
-  }
-
-  export interface BreakStatementNode extends LuaStatement {
-    type: "BreakStatement"
-  }
-
-  export interface GotoStatementNode extends LuaStatement {
-    type: "GotoStatement",
-    label: IdentifierNode
-  }
-
-  export interface ReturnStatementNode extends LuaStatement {
-    type: "ReturnStatement",
-    arguments: (LuaExpression | FunctionDeclarationNode)[]
-  }
-
-  export interface IfStatementNode extends LuaStatement {
-    type: "IfStatement",
-    clauses: (IfClauseNode | ElseifClauseNode | ElseClauseNode)[]
-  }
-
-  export interface IfClauseNode extends LuaStatement {
-    type: "IfClause",
-    condition: LuaExpression | FunctionDeclarationNode,
-    body: Block
-  }
-
-  export interface ElseifClauseNode extends LuaStatement {
-    type: "ElseifClause",
-    condition: LuaExpression | FunctionDeclarationNode,
-    body: Block
-  }
-
-  export interface ElseClauseNode extends LuaStatement {
-    type: "ElseClause",
-    body: Block
-  }
-
-  export interface WhileStatementNode extends LuaStatement {
-    type: "WhileStatement",
-    condition: LuaExpression | FunctionDeclarationNode,
-    body: Block
-  }
-
-  export interface DoStatementNode extends LuaStatement {
-    type: "DoStatement",
-    body: Block
-  }
-
-  export interface RepeatStatementNode extends LuaStatement {
-    type: "RepeatStatement",
-    condition: LuaExpression | FunctionDeclarationNode,
-    body: Block
-  }
-
-  export interface LocalStatementNode extends LuaStatement {
-    type: "LocalStatement",
-    variables: IdentifierNode[],
-    init: (LuaExpression | FunctionDeclarationNode)[]
-  }
-
-  export interface AssignmentStatementNode extends LuaStatement {
-    type: "AssignmentStatement",
-    variables: (LuaExpression | FunctionDeclarationNode | null)[],
-    init: (LuaExpression | FunctionDeclarationNode)[]
-  }
-
-  export interface CallStatementNode extends LuaStatement {
-    type: "CallStatement",
-    expression: LuaExpression | FunctionDeclarationNode | null
-  }
- 
-  export interface FunctionDeclarationNode extends LuaNode {
-    type: "FunctionDeclaration",
-    identifier: IdentifierNode | MemberExpressionNode | null,
-    isLocal: boolean,
-    parameters: (IdentifierNode | LiteralNode)[],
-    body: Block
-  }
-
-  export interface ForNumericStatementNode extends LuaStatement {
-    type: "ForNumericStatement",
-    variable: IdentifierNode,
-    start: LuaExpression | FunctionDeclarationNode,
-    end: LuaExpression | FunctionDeclarationNode,
-    step: LuaExpression | FunctionDeclarationNode | null,
-    body: Block
-  }
-
-  export interface ForGenericStatementNode extends LuaStatement {
-    type: "ForGenericStatement",
-    variables: IdentifierNode[],
-    iterators: (LuaExpression | FunctionDeclarationNode)[],
-    body: Block
-  }
-
-  export interface ChunkNode extends LuaStatement {
-    type: "Chunk",
-    body: Block,
-    comments?: CommentNode[],
-    globals?: IdentifierNode[],
-  }
-
-  export interface IdentifierNode extends LuaExpression {
-    type: "Identifier",
-    name: string
-  }
-
-  export interface LiteralNode extends LuaExpression {
-    type: "StringLiteral" | "NumericLiteral" | "BooleanLiteral" | "NilLiteral" | "VarargLiteral",
-    value: string | number | boolean | null | any,
-    raw: string
-  }
-
-  export interface StringLiteralNode extends LiteralNode {
-    type: "StringLiteral",
-    value: string,
-    raw: string
-  }
-
-  export interface TableKeyNode extends LuaExpression {
-    type: "TableKey",
-    key: LuaExpression | FunctionDeclarationNode,
-    value: LuaExpression | FunctionDeclarationNode
-  }
-
-  export interface TableKeyStringNode extends LuaExpression {
-    type: "TableKeyString",
-    key: IdentifierNode,
-    value: LuaExpression | FunctionDeclarationNode
-  }
-
-  export interface TableValueNode extends LuaNode {
-    type: "TableValue",
-    value: LuaExpression | FunctionDeclarationNode
-  }
-
-  export interface TableConstructorExpressionNode extends LuaExpression {
-    type: "TableConstructorExpression",
-    fields: (TableKeyNode | TableKeyStringNode | TableValueNode)[]
-  }
-
-  export interface BinaryExpressionNode extends LuaExpression {
-    type: "BinaryExpression",
-    operator: string,
-    left: LuaExpression | FunctionDeclarationNode | null,
-    right: LuaExpression | FunctionDeclarationNode | null
-  }
-
-  export interface LogicalExpressionNode extends LuaExpression {
-    type: "LogicalExpression",
-    operator: string,
-    left: LuaExpression | FunctionDeclarationNode | null,
-    right: LuaExpression | FunctionDeclarationNode | null
-  }
-
-  export interface UnaryExpressionNode extends LuaExpression {
-    type: "UnaryExpression",
-    operator: string,
-    argument: LuaExpression | FunctionDeclarationNode | null
-  }
-
-  export interface MemberExpressionNode extends LuaExpression {
-    type: "MemberExpression",
-    indexer: '.' | ':',
-    identifier: IdentifierNode,
-    base: LuaExpression | FunctionDeclarationNode
-  }
-
-  export interface IndexExpressionNode extends LuaExpression {
-    type: "IndexExpression",
-    base: LuaExpression,
-    index: LuaExpression
-  }
-
-  export interface CallExpressionNode extends LuaExpression {
-    type: "CallExpression",
-    base: IdentifierNode | MemberExpressionNode,
-    arguments: LuaExpression[]
-  }
-
-  export interface TableCallExpressionNode extends LuaExpression {
-    type: "TableCallExpression",
-    base: IdentifierNode | MemberExpressionNode,
-    arguments: TableConstructorExpressionNode
-  }
-
-  export interface StringCallExpressionNode extends LuaExpression {
-    type: "StringCallExpression",
-    base: IdentifierNode | MemberExpressionNode,
-    argument: StringLiteralNode
-  }
-
-  interface Location {
-    start: { line: number, column: number };
-    end: { line: number, column: number};
-  }
-
-  export interface CommentNode extends LuaNode {
-    type: "Comment",
-    value: string,
-    raw: string,
-    loc?: Location,
-    range?: [number, number],
-  }
-
-  export interface AbstractLuaAstBuilder {
-    labelStatement: (label: any) => any;
-    breakStatement: () => any;
-    gotoStatement: (label: any) => any;
-    returnStatement: (args: any[]) => any;
-    ifStatement: (clauses: any[]) => any;
-    ifClause: (condition: any, body: any) => any;
-    elseifClause: (condition: any, body: any) => any;
-    elseClause: (body: any) => any;
-    whileStatement: (condition: any, body: any) => any;
-    doStatement: (body: any) => any;
-    repeatStatement: (condition: any, body: any) => any;
-    localStatement: (variables: any[], init: any[]) => any;
-    assignmentStatement: (variables: any[], init: any[]) => any;
-    callStatement: (expression: any) => any;
-    functionStatement: (identifier: any, parameters: any[], isLocal: boolean, body: any) => any;
-    forNumericStatement: (variable: any, start: any, end: any, step: any, body: any) => any;
-    forGenericStatement: (variables: any[], iterators: any[], body: any) => any;
-    chunk: (body: any) => any;
-    identifier: (name: string) => any;
-    literal: (type: number, value: string | number | boolean | null | any, raw: string) => any;
-    tableKey: (key: any, value: any) => any;
-    tableKeyString: (key: any, value: any) => any;
-    tableValue: (value: any) => any;
-    tableConstructorExpression: (fields: any[]) => any;
-    binaryExpression: (operator: string, left: any, right: any) => any;
-    unaryExpression: (operator: string, argument: any) => any;
-    memberExpression: (base: any, indexer: '.' | ':', identifier: any) => any;
-    indexExpression: (base: any, index: any) => any;
-    callExpression: (base: any, args: any[]) => any;
-    tableCallExpression: (base: any, args: any) => any;
-    stringCallExpression: (base: any, argument: any) => any;
-    comment: (value: string, raw: string) => any;
-  }
-
-  export interface LuaAstBuilder extends AbstractLuaAstBuilder {
-    labelStatement: (label: IdentifierNode) => LabelStatementNode;
-    breakStatement: () => BreakStatementNode;
-    gotoStatement: (label: IdentifierNode) => GotoStatementNode;
-    returnStatement: (args: (LuaExpression | FunctionDeclarationNode)[]) => ReturnStatementNode;
-    ifStatement: (clauses: (IfClauseNode | ElseifClauseNode | ElseClauseNode)[]) => IfStatementNode;
-    ifClause: (condition: LuaExpression | FunctionDeclarationNode, body: Block) => IfClauseNode;
-    elseifClause: (condition: LuaExpression | FunctionDeclarationNode, body: Block) => ElseifClauseNode;
-    elseClause: (body: Block) => ElseClauseNode;
-    whileStatement: (condition: LuaExpression | FunctionDeclarationNode, body: Block) => WhileStatementNode;
-    doStatement: (body: Block) => DoStatementNode;
-    repeatStatement: (condition: LuaExpression | FunctionDeclarationNode, body: Block) => RepeatStatementNode;
-    localStatement: (variables: IdentifierNode[], init: (LuaExpression | FunctionDeclarationNode)[]) => LocalStatementNode;
-    assignmentStatement: (variables: (LuaExpression | FunctionDeclarationNode | null)[],
-                          init: (LuaExpression | FunctionDeclarationNode)[]) => AssignmentStatementNode;
-    callStatement: (expression: LuaExpression | FunctionDeclarationNode | null) => CallStatementNode;
-    functionStatement: (identifier: IdentifierNode | MemberExpressionNode | null, parameters: (IdentifierNode | LiteralNode)[], isLocal: boolean, body: Block) => FunctionDeclarationNode;
-    forNumericStatement: (variable: IdentifierNode, start: LuaExpression | FunctionDeclarationNode,
-                          end: LuaExpression | FunctionDeclarationNode,
-                          step: LuaExpression | FunctionDeclarationNode | null,
-                          body: Block) => ForNumericStatementNode;
-    forGenericStatement: (variables: IdentifierNode[], iterators: (LuaExpression | FunctionDeclarationNode)[], body: Block) => ForGenericStatementNode;
-    chunk: (body: Block) => ChunkNode;
-    identifier: (name: string) => IdentifierNode;
-    literal: (type: number, value: string | number | boolean | null | any, raw: string) => LiteralNode;
-    tableKey: (key: LuaExpression | FunctionDeclarationNode,
-               value: LuaExpression | FunctionDeclarationNode) => TableKeyNode;
-    tableKeyString: (key: IdentifierNode, value: LuaExpression | FunctionDeclarationNode) => TableKeyStringNode;
-    tableValue: (value: LuaExpression | FunctionDeclarationNode) => TableValueNode;
-    tableConstructorExpression: (fields: (TableKeyNode | TableKeyStringNode | TableValueNode)[]) => TableConstructorExpressionNode;
-    binaryExpression: (operator: string, left: LuaExpression | FunctionDeclarationNode | null,
-                       right: LuaExpression | FunctionDeclarationNode | null) => BinaryExpressionNode | LogicalExpressionNode;
-    unaryExpression: (operator: string, argument: LuaExpression | FunctionDeclarationNode | null) => UnaryExpressionNode;
-    memberExpression: (base: LuaExpression | FunctionDeclarationNode, indexer: '.' | ':', identifier: IdentifierNode) => MemberExpressionNode;
-    indexExpression: (base: LuaExpression, index: LuaExpression) => IndexExpressionNode;
-    callExpression: (base: IdentifierNode | MemberExpressionNode, args: (LuaExpression)[]) => CallExpressionNode;
-    tableCallExpression: (base: IdentifierNode | MemberExpressionNode, args: TableConstructorExpressionNode) => TableCallExpressionNode;
-    stringCallExpression: (base: IdentifierNode | MemberExpressionNode, argument: StringLiteralNode) => StringCallExpressionNode;
-    comment: (value: string, raw: string) => CommentNode;
-  }
-
   export class DefaultLuaAstBuilder implements LuaAstBuilder {
-    labelStatement(label: IdentifierNode): LabelStatementNode {
+    labelStatement(label: Identifier): LabelStatement {
       return {
           type: 'LabelStatement'
         , label: label
       };
     }
-
-    breakStatement(): BreakStatementNode {
+  
+    breakStatement(): BreakStatement {
       return {
           type: 'BreakStatement'
       };
     }
-
-    gotoStatement(label: IdentifierNode): GotoStatementNode {
+  
+    gotoStatement(label: Identifier): GotoStatement {
       return {
           type: 'GotoStatement'
         , label: label
       };
     }
-
-    returnStatement(args: (LuaExpression | FunctionDeclarationNode)[]): ReturnStatementNode {
+  
+    returnStatement(args: (Expression)[]): ReturnStatement {
       return {
           type: 'ReturnStatement'
         , 'arguments': args
       };
     }
-
-    ifStatement(clauses: (IfClauseNode | ElseifClauseNode | ElseClauseNode)[]): IfStatementNode {
+  
+    ifStatement(clauses: IfClauses): IfStatement {
       return {
           type: 'IfStatement'
         , clauses: clauses
       };
     }
-
-    ifClause(condition: LuaExpression | FunctionDeclarationNode, body: Block): IfClauseNode {
+  
+    ifClause(condition: Expression, body: Block): IfClause {
       return {
           type: 'IfClause'
         , condition: condition
         , body: body
       };
     }
-    elseifClause(condition: LuaExpression | FunctionDeclarationNode, body: Block): ElseifClauseNode {
+    elseifClause(condition: Expression, body: Block): ElseifClause {
       return {
           type: 'ElseifClause'
         , condition: condition
         , body: body
       };
     }
-    elseClause(body: Block): ElseClauseNode {
+    elseClause(body: Block): ElseClause {
       return {
           type: 'ElseClause'
         , body: body
       };
     }
-
-    whileStatement(condition: LuaExpression | FunctionDeclarationNode, body: Block): WhileStatementNode {
+  
+    whileStatement(condition: Expression, body: Block): WhileStatement {
       return {
           type: 'WhileStatement'
         , condition: condition
         , body: body
       };
     }
-
-    doStatement(body: Block): DoStatementNode {
+  
+    doStatement(body: Block): DoStatement {
       return {
           type: 'DoStatement'
         , body: body
       };
     }
-
-    repeatStatement(condition: LuaExpression | FunctionDeclarationNode, body: Block): RepeatStatementNode {
+  
+    repeatStatement(condition: Expression, body: Block): RepeatStatement {
       return {
           type: 'RepeatStatement'
         , condition: condition
         , body: body
       };
     }
-
-    localStatement(variables: IdentifierNode[], init: (LuaExpression | FunctionDeclarationNode)[]): LocalStatementNode {
+  
+    localStatement(variables: Identifier[], init: Expression[]): LocalStatement {
       return {
           type: 'LocalStatement'
         , variables: variables
         , init: init
       };
     }
-
-    assignmentStatement(variables: (LuaExpression | FunctionDeclarationNode | null)[],
-                        init: (LuaExpression | FunctionDeclarationNode)[]): AssignmentStatementNode {
+  
+    assignmentStatement(variables: Array<Identifier | MemberExpression | IndexExpression>,
+                        init: Expression[]): AssignmentStatement {
       return {
           type: 'AssignmentStatement'
         , variables: variables
         , init: init
       };
     }
-
-    callStatement(expression: LuaExpression | FunctionDeclarationNode | null): CallStatementNode {
+  
+    callStatement(expression: CallExpression): CallStatement {
       return {
           type: 'CallStatement'
         , expression: expression
       };
     }
-
-    functionStatement(identifier: IdentifierNode | MemberExpressionNode | null, parameters: (IdentifierNode | LiteralNode)[], isLocal: boolean, body: Block): FunctionDeclarationNode {
+  
+    functionStatement(identifier: Identifier | MemberExpression | null,
+                      parameters: Array<Identifier | VarargLiteral>,
+                      isLocal: boolean, body: Block): FunctionDeclaration | FunctionExpression {
       return {
           type: 'FunctionDeclaration'
         , identifier: identifier
         , isLocal: isLocal
         , parameters: parameters
         , body: body
-      };
+      } as FunctionDeclaration | FunctionDeclaration;
     }
-
-    forNumericStatement(variable: IdentifierNode, start: LuaExpression | FunctionDeclarationNode,
-                        end: LuaExpression | FunctionDeclarationNode,
-                        step: LuaExpression | FunctionDeclarationNode | null,
-                        body: Block): ForNumericStatementNode {
+  
+    forNumericStatement(variable: Identifier, start: Expression,
+                        end: Expression,
+                        step: Expression | null,
+                        body: Block): ForNumericStatement {
       return {
           type: 'ForNumericStatement'
         , variable: variable
@@ -645,8 +362,9 @@
         , body: body
       };
     }
-
-    forGenericStatement(variables: IdentifierNode[], iterators: (LuaExpression | FunctionDeclarationNode)[], body: Block): ForGenericStatementNode {
+  
+    forGenericStatement(variables: Identifier[], iterators: Expression[],
+                        body: Block): ForGenericStatement {
       return {
           type: 'ForGenericStatement'
         , variables: variables
@@ -654,85 +372,84 @@
         , body: body
       };
     }
-
-    chunk(body: Block): ChunkNode {
+  
+    chunk(body: Block): Chunk {
       return {
           type: 'Chunk'
         , body: body
       };
     }
-
-    identifier(name: string): IdentifierNode {
+  
+    identifier(name: string): Identifier {
       return {
           type: 'Identifier'
         , name: name
       };
     }
-
-    literal(type: number, value: string | number | boolean | null | any, raw: string): LiteralNode {
+  
+    literal(type: number, value: string | number | boolean | null, raw: string): Literal {
       const strType = (type === TokenType.StringLiteral) ? 'StringLiteral'
         : (type === TokenType.NumericLiteral) ? 'NumericLiteral'
         : (type === TokenType.BooleanLiteral) ? 'BooleanLiteral'
         : (type === TokenType.NilLiteral) ? 'NilLiteral'
         : 'VarargLiteral';
-
+  
       return {
           type: strType
         , value: value
         , raw: raw
-      };
+      } as Literal;
     }
-
-    tableKey(key: LuaExpression | FunctionDeclarationNode,
-      value: LuaExpression | FunctionDeclarationNode): TableKeyNode {
+  
+    tableKey(key: Expression, value: Expression): TableKey {
       return {
           type: 'TableKey'
         , key: key
         , value: value
       };
     }
-    tableKeyString(key: IdentifierNode, value: LuaExpression | FunctionDeclarationNode): TableKeyStringNode {
+    tableKeyString(key: Identifier, value: Expression): TableKeyString {
       return {
           type: 'TableKeyString'
         , key: key
         , value: value
       };
     }
-    tableValue(value: LuaExpression | FunctionDeclarationNode): TableValueNode {
+    tableValue(value: Expression): TableValue {
       return {
           type: 'TableValue'
         , value: value
       };
     }
-
-
-    tableConstructorExpression(fields: (TableKeyNode | TableKeyStringNode | TableValueNode)[]): TableConstructorExpressionNode {
+  
+  
+    tableConstructorExpression(fields:  Array<TableKey | TableKeyString | TableValue>): TableConstructorExpression {
       return {
           type: 'TableConstructorExpression'
         , fields: fields
       };
     }
-    binaryExpression(operator: string, left: LuaExpression | FunctionDeclarationNode | null,
-                     right: LuaExpression | FunctionDeclarationNode | null): BinaryExpressionNode | LogicalExpressionNode {
+    binaryExpression(operator: BinaryOperator | LogicalOperator, left: Expression,
+                     right: Expression): BinaryExpression | LogicalExpression {
       let type: 'LogicalExpression' | 'BinaryExpression' = ('and' === operator || 'or' === operator) ?
         'LogicalExpression' :
         'BinaryExpression';
-
+  
       return {
           type: type
         , operator: operator
         , left: left
         , right: right
-      };
+      } as BinaryExpression | LogicalExpression;
     }
-    unaryExpression(operator: string, argument: LuaExpression | FunctionDeclarationNode | null): UnaryExpressionNode {
+    unaryExpression(operator: UnaryOperator, argument: Expression): UnaryExpression {
       return {
           type: 'UnaryExpression'
         , operator: operator
         , argument: argument
       };
     }
-    memberExpression(base: LuaExpression | FunctionDeclarationNode, indexer: '.' | ':', identifier: IdentifierNode): MemberExpressionNode {
+    memberExpression(base: Identifier | Expression, indexer: Indexer, identifier: Identifier): MemberExpression {
       return {
           type: 'MemberExpression'
         , indexer: indexer
@@ -740,40 +457,40 @@
         , base: base
       };
     }
-
-    indexExpression(base: LuaExpression, index: LuaExpression): IndexExpressionNode {
+  
+    indexExpression(base: Expression, index: Expression): IndexExpression {
       return {
           type: 'IndexExpression'
         , base: base
         , index: index
       };
     }
-
-    callExpression(base: IdentifierNode | MemberExpressionNode, args: (LuaExpression)[]): CallExpressionNode {
+  
+    callExpression(base: Identifier | MemberExpression, args: Expression[]): CallExpression {
       return {
           type: 'CallExpression'
         , base: base
         , 'arguments': args
       };
     }
-
-    tableCallExpression(base: IdentifierNode | MemberExpressionNode, args: TableConstructorExpressionNode): TableCallExpressionNode {
+  
+    tableCallExpression(base: Identifier | MemberExpression, args: TableConstructorExpression): TableCallExpression {
       return {
           type: 'TableCallExpression'
         , base: base
         , 'arguments': args
       };
     }
-
-    stringCallExpression(base: IdentifierNode | MemberExpressionNode, argument: StringLiteralNode): StringCallExpressionNode {
+  
+    stringCallExpression(base: Identifier | MemberExpression, argument: StringLiteral): StringCallExpression {
       return {
           type: 'StringCallExpression'
         , base: base
         , argument: argument
       };
     }
-
-    comment(value: string, raw: string): CommentNode {
+  
+    comment(value: string, raw: string): Comment {
       return {
           type: 'Comment'
         , value: value
@@ -781,15 +498,16 @@
       };
     }
   }
+  
 
-  export let ast: AbstractLuaAstBuilder = new DefaultLuaAstBuilder();
+  export let ast: LuaAstBuilder = new DefaultLuaAstBuilder();
 
   /**
    * Wrap up the node object.
    *
    * @param node
    */
-  function finishNode<T extends LuaNode>(node: T): T {
+  function finishNode<T extends Node>(node: T): T {
     // Pop a `Marker` off the location-array and attach its location data.
     if (trackLocations) {
       const location = locations.pop();
@@ -890,7 +608,7 @@
   }
 
   function tokenValue(token: Token) {
-    var raw = input.slice(token.range[0], token.range[1]);
+    const raw = input.slice(token.range[0], token.range[1]);
     if (raw)
       return raw;
     return token.value;
@@ -924,9 +642,9 @@
    * If there's no token in the buffer it means we have reached <eof>.
    */
   function unexpected(found: Token | string): never {
-    var near = tokenValue(lookahead);
+    const near = tokenValue(lookahead);
     if (typeof(found) === 'object' && 'undefined' !== typeof(found.type)) {
-      var type;
+      let type;
       switch (found.type) {
         case TokenType.StringLiteral:   type = 'string';      break;
         case TokenType.Keyword:         type = 'keyword';     break;
@@ -969,7 +687,7 @@
   interface Token {
     type: TokenType;
     value: string | boolean | number | null;
-    range: [number, number];
+    range: TextRange;
     line: number;
     lineStart: number;
     lastLine?: number;
@@ -980,7 +698,7 @@
     , token: Token
     , previousToken: Token
     , lookahead: Token
-    , comments: CommentNode[]
+    , comments: Comment[]
     , tokenStart: number
     , line: number
     , lineStart: number;
@@ -1002,7 +720,7 @@
       , range: [index, index]
     };
 
-    var charCode = input.charCodeAt(index)
+    const charCode = input.charCodeAt(index)
       , next = input.charCodeAt(index + 1);
 
     // Memorize the range index where the token begins.
@@ -1084,7 +802,7 @@
    * single line.
    */
   function consumeEOL() {
-    var charCode = input.charCodeAt(index)
+    const charCode = input.charCodeAt(index)
       , peekCharCode = input.charCodeAt(index + 1);
 
     if (isLineTerminator(charCode)) {
@@ -1101,7 +819,7 @@
 
   function skipWhiteSpace() {
     while (index < length) {
-      var charCode = input.charCodeAt(index);
+      const charCode = input.charCodeAt(index);
       if (isWhiteSpace(charCode)) {
         ++index;
       } else if (!consumeEOL()) {
@@ -1223,7 +941,7 @@
    * exception.
    */
   function scanLongStringLiteral(): Token {
-    var beginLine = line
+    const beginLine = line
       , beginLineStart = lineStart
       , string = readLongString(false);
     // Fail if it's not a multiline literal.
@@ -1248,10 +966,10 @@
   * If a hexadecimal number is encountered, it will be converted.
   */
   function scanNumericLiteral(): Token {
-    var character = input.charAt(index)
+    const character = input.charAt(index)
       , next = input.charAt(index + 1);
 
-    var value = ('0' === character && (!!next && 'xX'.indexOf(next) >= 0)) ?
+    const value = ('0' === character && (!!next && 'xX'.indexOf(next) >= 0)) ?
       readHexLiteral() : readDecLiteral();
 
     return {
@@ -1356,7 +1074,7 @@
   }
 
   function readUnicodeEscapeSequence() {
-    var sequenceStart = index++;
+    const sequenceStart = index++;
 
     if (input.charAt(index++) !== '{')
       raise(null, errors.braceExpected, '{', '\\' + input.slice(sequenceStart, index));
@@ -1364,7 +1082,7 @@
       raise(null, errors.hexadecimalDigitExpected, '\\' + input.slice(sequenceStart, index));
 
     while (input.charCodeAt(index) === 0x30) ++index;
-    var escStart = index;
+    const escStart = index;
 
     while (isHexDigit(input.charCodeAt(index))) {
       ++index;
@@ -1372,7 +1090,7 @@
         raise(null, errors.tooLargeCodepoint, '\\' + input.slice(sequenceStart, index));
     }
 
-    var b = input.charAt(index++);
+    const b = input.charAt(index++);
     if (b !== '}') {
       if ((b === '"') || (b === "'"))
         raise(null, errors.braceExpected, '}', '\\' + input.slice(sequenceStart, index--));
@@ -1380,8 +1098,8 @@
         raise(null, errors.hexadecimalDigitExpected, '\\' + input.slice(sequenceStart, index));
     }
 
-    var codepoint = parseInt(input.slice(escStart, index - 1) || '0', 16);
-    var frag = '\\' + input.slice(sequenceStart, index);
+    const codepoint = parseInt(input.slice(escStart, index - 1) || '0', 16);
+    const frag = '\\' + input.slice(sequenceStart, index);
 
     if (codepoint > 0x10ffff) {
       raise(null, errors.tooLargeCodepoint, frag);
@@ -1392,7 +1110,7 @@
 
   /** Translate escape sequences to the actual characters. */
   function readEscapeSequence() {
-    var sequenceStart = index;
+    const sequenceStart = index;
     switch (input.charAt(index)) {
       // Lua allow the following escape sequences.
       case 'a': ++index; return '\x07';
@@ -1416,8 +1134,8 @@
         // \ddd, where ddd is a sequence of up to three decimal digits.
         while (isDecDigit(input.charCodeAt(index)) && index - sequenceStart < 3) ++index;
 
-        var frag = input.slice(sequenceStart, index);
-        var ddd = parseInt(frag, 10);
+        const frag = input.slice(sequenceStart, index);
+        const ddd = parseInt(frag, 10);
         if (ddd > 255) {
           raise(null, errors.decimalEscapeTooLarge, '\\' + ddd);
         }
@@ -1468,10 +1186,10 @@
     tokenStart = index;
     index += 2; // --
 
-    var character = input.charAt(index)
-      , content: string | boolean = ''
-      , isLong = false
-      , commentStart = index
+    const character = input.charAt(index);
+    let content: string | boolean = ''
+      , isLong = false;
+    const commentStart = index
       , lineStartComment = lineStart
       , lineComment = line;
 
@@ -1491,7 +1209,7 @@
     }
 
     if (options.comments) {
-      var node = ast.comment(content, input.slice(tokenStart, index));
+      const node = ast.comment(content, input.slice(tokenStart, index));
 
       // `Marker`s depend on tokens available in the parser and as comments are
       // intercepted in the lexer all location data is set manually.
@@ -1514,10 +1232,11 @@
    * then appending until an equal depth is found.
    */
   function readLongString(isComment: boolean) {
-    var level = 0
+    let level = 0
       , content = ''
       , terminator = false
-      , character: string, stringStart: number, firstLine = line;
+      , character: string, stringStart: number;
+    const firstLine = line;
 
     ++index; // [
 
@@ -1543,7 +1262,7 @@
       // if it matches.
       if (']' === character) {
         terminator = true;
-        for (var i = 0; i < level; ++i) {
+        for (let i = 0; i < level; ++i) {
           if ('=' !== input.charAt(index + i)) terminator = false;
         }
         if (']' !== input.charAt(index + level)) terminator = false;
@@ -1690,7 +1409,7 @@
     // The current scope index
     , scopeDepth: number
     // A list of all global identifier nodes.
-    , globals: IdentifierNode[];
+    , globals: Identifier[];
 
   /** Create a new scope inheriting all declarations from the previous scope. */
   function createScope() {
@@ -1714,7 +1433,7 @@
   }
 
   /** Add identifier to the current scope */
-  function scopeIdentifier(node: IdentifierNode) {
+  function scopeIdentifier(node: Identifier) {
     scopeIdentifierName(node.name);
     attachScope(node, true);
   }
@@ -1723,7 +1442,7 @@
    * Attach scope information to node. If the node is global, store it in the
    * globals array so we can return the information to the user.
    */
-  function attachScope(node: IdentifierNode, isLocal: boolean) {
+  function attachScope(node: Identifier, isLocal: boolean) {
     if (!isLocal && -1 === indexOfObject(globals, 'name', node.name))
       globals.push(node);
 
@@ -1752,7 +1471,7 @@
 
   class Marker {
     public loc: Location | null = null;
-    public range: [number, number] | null = null;
+    public range: TextRange | null = null;
 
     constructor(token: Token) {
       if (options.locations) {
@@ -1784,9 +1503,9 @@
       }
     }
 
-    public bless(node: LuaNode) {
+    public bless(node: Node) {
       if (this.loc) {
-        var loc = this.loc;
+        const loc = this.loc;
         node.loc = {
           start: {
             line: loc.start.line,
@@ -1881,8 +1600,8 @@
     }
 
     public popScope() {
-      for (var i = 0; i < this.pendingGotos.length; ++i) {
-        var theGoto = this.pendingGotos[i];
+      for (let i = 0; i < this.pendingGotos.length; ++i) {
+        const theGoto = this.pendingGotos[i];
         if (theGoto.maxDepth >= this.scopes.length)
           if (--theGoto.maxDepth <= 0)
             raise(theGoto.token, errors.labelNotVisible, theGoto.target);
@@ -1910,15 +1629,15 @@
     }
 
     public addLabel(name: string, token: Token) {
-      var scope = this.currentScope();
+      const scope = this.currentScope();
 
       if (Object.prototype.hasOwnProperty.call(scope.labels, name)) {
         raise(token, errors.labelAlreadyDefined, name, scope.labels[name].line);
       } else {
-        var newGotos: Goto[] = [];
+        const newGotos: Goto[] = [];
 
-        for (var i = 0; i < this.pendingGotos.length; ++i) {
-          var theGoto = this.pendingGotos[i];
+        for (let i = 0; i < this.pendingGotos.length; ++i) {
+          const theGoto = this.pendingGotos[i];
 
           if (theGoto.maxDepth >= this.scopes.length && theGoto.target === name) {
             if (theGoto.localCounts[this.scopes.length - 1] < scope.locals.length) {
@@ -1951,10 +1670,10 @@
     }
 
     public raiseDeferredErrors() {
-      var scope = this.currentScope();
-      var bads = scope.deferredGotos;
-      for (var i = 0; i < bads.length; ++i) {
-        var theGoto = bads[i];
+      const scope = this.currentScope();
+      const bads = scope.deferredGotos;
+      for (let i = 0; i < bads.length; ++i) {
+        const theGoto = bads[i];
         raise(theGoto.token, errors.gotoJumpInLocalScope, theGoto.target, scope.locals[theGoto.localCounts[this.scopes.length - 1]].name);
       }
       // Would be dead code currently, but may be useful later
@@ -2036,15 +1755,15 @@
   //
   //     block ::= {stat} [retstat]
 
-  function parseBlock(flowContext: FlowContext): (LuaNode | null | undefined)[] {
-    let block = []
-      , statement;
+  function parseBlock(flowContext: FlowContext): Block {
+    let block: Block = []
+      , statement: Statement | undefined;
 
     while (!isBlockFollow(token)) {
       // Return has to be the last statement in a block.
       // Likewise 'break' in Lua older than 5.2
       if ('return' === token.value || (!features.relaxedBreak && 'break' === token.value)) {
-        block.push(parseStatement(flowContext));
+        block.push(parseStatement(flowContext) as ReturnStatement | BreakStatement);
         break;
       }
       statement = parseStatement(flowContext);
@@ -2064,7 +1783,7 @@
   //          | if | for | function | local | label | assignment
   //          | functioncall | ';'
 
-  function parseStatement(flowContext: FlowContext) {
+  function parseStatement(flowContext: FlowContext): Statement | undefined {
     markLocation();
 
     if (TokenType.Punctuator === token.type) {
@@ -2087,8 +1806,8 @@
         case 'if':       next(); return parseIfStatement(flowContext);
         case 'return':   next(); return parseReturnStatement(flowContext);
         case 'function': next();
-          var name = parseFunctionName();
-          return parseFunctionDeclaration(name);
+          const name = parseFunctionName();
+          return parseFunctionDeclaration(name) as FunctionDeclaration;
         case 'while':    next(); return parseWhileStatement(flowContext);
         case 'for':      next(); return parseForStatement(flowContext);
         case 'repeat':   next(); return parseRepeatStatement(flowContext);
@@ -2118,7 +1837,7 @@
   //     label ::= '::' Name '::'
 
   function parseLabelStatement(flowContext: FlowContext) {
-    var nameToken = token
+    const nameToken: Token = token
       , label = parseIdentifier();
 
     if (options.scope) {
@@ -2141,20 +1860,20 @@
   //     goto ::= 'goto' Name
 
   function parseGotoStatement(flowContext: FlowContext) {
-    var name = token.value
+    const name = token.value as string
       , gotoToken = previousToken
       , label = parseIdentifier();
 
-    flowContext.addGoto(name as string, gotoToken);
+    flowContext.addGoto(name, gotoToken);
     return finishNode(ast.gotoStatement(label));
   }
 
   //     do ::= 'do' block 'end'
 
-  function parseDoStatement(flowContext: FlowContext): DoStatementNode {
+  function parseDoStatement(flowContext: FlowContext) {
     if (options.scope) createScope();
     flowContext.pushScope();
-    var body = parseBlock(flowContext);
+    const body = parseBlock(flowContext);
     flowContext.popScope();
     if (options.scope) destroyScope();
     expect('end');
@@ -2163,12 +1882,12 @@
 
   //     while ::= 'while' exp 'do' block 'end'
 
-  function parseWhileStatement(flowContext: FlowContext): WhileStatementNode {
-    var condition = parseExpectedExpression(flowContext);
+  function parseWhileStatement(flowContext: FlowContext) {
+    const condition = parseExpectedExpression(flowContext);
     expect('do');
     if (options.scope) createScope();
     flowContext.pushScope(true);
-    var body = parseBlock(flowContext);
+    const body = parseBlock(flowContext);
     flowContext.popScope();
     if (options.scope) destroyScope();
     expect('end');
@@ -2177,13 +1896,13 @@
 
   //     repeat ::= 'repeat' block 'until' exp
 
-  function parseRepeatStatement(flowContext: FlowContext): RepeatStatementNode {
+  function parseRepeatStatement(flowContext: FlowContext) {
     if (options.scope) createScope();
     flowContext.pushScope(true);
-    var body = parseBlock(flowContext);
+    const body = parseBlock(flowContext);
     expect('until');
     flowContext.raiseDeferredErrors();
-    var condition = parseExpectedExpression(flowContext);
+    const condition = parseExpectedExpression(flowContext);
     flowContext.popScope();
     if (options.scope) destroyScope();
     return finishNode(ast.repeatStatement(condition, body));
@@ -2192,10 +1911,10 @@
   //     retstat ::= 'return' [exp {',' exp}] [';']
 
   function parseReturnStatement(flowContext: FlowContext) {
-    var expressions = [];
+    let expressions: Expression[] = [];
 
     if ('end' !== token.value) {
-      var expression = parseExpression(flowContext);
+      let expression = parseExpression(flowContext);
       if (null != expression) expressions.push(expression);
       while (consume(',')) {
         expression = parseExpectedExpression(flowContext);
@@ -2209,10 +1928,10 @@
   //     if ::= 'if' exp 'then' block {elif} ['else' block] 'end'
   //     elif ::= 'elseif' exp 'then' block
 
-  function parseIfStatement(flowContext: FlowContext): IfStatementNode {
-    var clauses = []
-      , condition
-      , body
+  function parseIfStatement(flowContext: FlowContext) {
+    let clauses: IfClauses
+      , condition: Expression
+      , body: Block
       , marker: Marker | null = null;
 
     // IfClauses begin at the same location as the parent IfStatement.
@@ -2228,7 +1947,7 @@
     body = parseBlock(flowContext);
     flowContext.popScope();
     if (options.scope) destroyScope();
-    clauses.push(finishNode(ast.ifClause(condition, body)));
+    clauses = [finishNode(ast.ifClause(condition, body))];
 
     if (trackLocations) marker = createLocationMarker();
     while (consume('elseif')) {
@@ -2269,8 +1988,8 @@
   //     namelist ::= Name {',' Name}
   //     explist ::= exp {',' exp}
 
-  function parseForStatement(flowContext: FlowContext): ForNumericStatementNode | ForGenericStatementNode {
-    var variable = parseIdentifier()
+  function parseForStatement(flowContext: FlowContext) {
+    let variable = parseIdentifier()
       , body: Block;
 
     // The start-identifier is local.
@@ -2284,12 +2003,12 @@
     // Numeric For Statement.
     if (consume('=')) {
       // Start expression
-      var start = parseExpectedExpression(flowContext);
+      const start = parseExpectedExpression(flowContext);
       expect(',');
       // End expression
-      var end = parseExpectedExpression(flowContext);
+      const end = parseExpectedExpression(flowContext);
       // Optional step expression
-      var step = consume(',') ? parseExpectedExpression(flowContext) : null;
+      const step = consume(',') ? parseExpectedExpression(flowContext) : null;
 
       expect('do');
       flowContext.pushScope(true);
@@ -2303,7 +2022,7 @@
     // If not, it's a Generic For Statement
     else {
       // The namelist can contain one or more identifiers.
-      var variables = [variable];
+      const variables = [variable];
       while (consume(',')) {
         variable = parseIdentifier();
         // Each variable in the namelist is locally scoped.
@@ -2311,11 +2030,11 @@
         variables.push(variable);
       }
       expect('in');
-      var iterators = [];
+      const iterators = [];
 
       // One or more expressions in the explist.
       do {
-        var expression = parseExpectedExpression(flowContext);
+        const expression = parseExpectedExpression(flowContext);
         iterators.push(expression);
       } while (consume(','));
 
@@ -2341,12 +2060,12 @@
   //        | 'local' Name {',' Name} ['=' exp {',' exp}]
 
   function parseLocalStatement(flowContext: FlowContext) {
-    var name
+    let name: Identifier
       , declToken = previousToken;
 
     if (TokenType.Identifier === token.type) {
-      var variables = []
-        , init = [];
+      let variables: Identifier[] = []
+        , init: Expression[] = [];
 
       do {
         name = parseIdentifier();
@@ -2357,7 +2076,7 @@
 
       if (consume('=')) {
         do {
-          var expression = parseExpectedExpression(flowContext);
+          const expression = parseExpectedExpression(flowContext);
           init.push(expression);
         } while (consume(','));
       }
@@ -2366,7 +2085,7 @@
       // Therefore assignments can't use their declarator. And the identifiers
       // shouldn't be added to the scope until the statement is complete.
       if (options.scope) {
-        for (var i = 0, l = variables.length; i < l; ++i) {
+        for (let i = 0, l = variables.length; i < l; ++i) {
           scopeIdentifier(variables[i]);
         }
       }
@@ -2383,28 +2102,29 @@
       }
 
       // MemberExpressions are not allowed in local function statements.
-      return parseFunctionDeclaration(name, true);
+      return parseFunctionDeclaration(name, true) as FunctionDeclaration;
     } else {
       raiseUnexpectedToken('<name>', token);
     }
   }
 
   //     assignment ::= varlist '=' explist
-  //     var ::= Name | prefixexp '[' exp ']' | prefixexp '.' Name
-  //     varlist ::= var {',' var}
+  //     const ::= Name | prefixexp '[' exp ']' | prefixexp '.' Name
+  //     varlist ::= const {',' const}
   //     explist ::= exp {',' exp}
   //
   //     call ::= callexp
   //     callexp ::= prefixexp args | prefixexp ':' Name args
 
-  function parseAssignmentOrCallStatement(flowContext: FlowContext): LuaExpression {
+  function parseAssignmentOrCallStatement(flowContext: FlowContext) {
     // Keep a reference to the previous token for better error messages in case
     // of invalid statement
+    // Warning: 'previous' is declared but its value is never read.
     let previous = token
       , marker: Marker | null = null, startMarker: Marker | null = null;
-    let lvalue, base: LuaExpression | null, name;
+    let lvalue, base: Expression, name;
 
-    let targets: (LuaExpression | null)[] = [];
+    let targets: Expression[] = [];
 
     if (trackLocations) startMarker = createLocationMarker();
 
@@ -2415,7 +2135,7 @@
         name = token.value as string;
         base = parseIdentifier();
         // Set the parent scope.
-        if (options.scope) attachScope(base as IdentifierNode, scopeHasName(name));
+        if (options.scope) attachScope(base as Identifier, scopeHasName(name));
         lvalue = true;
       } else if ('(' === token.value) {
         next();
@@ -2427,7 +2147,8 @@
       }
 
       both: for (;;) {
-        var newBase;
+        // Warning: 'newBase' is declared but its value is never read.
+        let newBase;
 
         switch (TokenType.StringLiteral === token.type ? '"' : token.value) {
         case '.':
@@ -2444,7 +2165,7 @@
           break both;
         }
 
-        base = parsePrefixExpressionPart(base as LuaExpression, marker, flowContext);
+        base = parsePrefixExpressionPart(base as Expression, marker, flowContext) as Expression;
       }
 
       targets.push(base);
@@ -2461,28 +2182,28 @@
 
     if (targets.length === 1 && lvalue === null) {
       pushLocation(marker);
-      return finishNode<LuaExpression>(ast.callStatement(targets[0]));
+      return finishNode(ast.callStatement(targets[0] as CallExpression));
     } else if (!lvalue) {
       return unexpected(token);
     }
 
     expect('=');
 
-    var values = [];
+    const values = [];
 
     do {
       values.push(parseExpectedExpression(flowContext));
     } while (consume(','));
 
     pushLocation(startMarker);
-    return finishNode(ast.assignmentStatement(targets, values));
+    return finishNode(ast.assignmentStatement(targets as (Identifier | MemberExpression | IndexExpression)[], values));
   }
 
   // ### Non-statements
 
   //     Identifier ::= Name
 
-  function parseIdentifier(): IdentifierNode {
+  function parseIdentifier() {
     markLocation();
     const identifier = token.value as string;
     if (TokenType.Identifier !== token.type) raiseUnexpectedToken('<name>', token);
@@ -2500,11 +2221,11 @@
   //     funcdecl ::= '(' [parlist] ')' block 'end'
   //     parlist ::= Name {',' Name} | [',' '...'] | '...'
 
-  function parseFunctionDeclaration(name: IdentifierNode | MemberExpressionNode | null, isLocal = false): FunctionDeclarationNode {
+  function parseFunctionDeclaration(name: Identifier | MemberExpression | null, isLocal = false) {
     const flowContext = makeFlowContext();
     flowContext.pushScope();
 
-    const parameters: (IdentifierNode | LiteralNode)[] = [];
+    const parameters: (Identifier | VarargLiteral)[] = [];
     expect('(');
 
     // The declaration has arguments
@@ -2524,7 +2245,7 @@
         // No arguments are allowed after a vararg.
         else if (TokenType.VarargLiteral === token.type) {
           flowContext.allowVararg = true;
-          parameters.push(parsePrimaryExpression(flowContext) as LiteralNode);
+          parameters.push(parsePrimaryExpression(flowContext) as VarargLiteral);
         } else {
           raiseUnexpectedToken('<name> or \'...\'', token);
         }
@@ -2533,7 +2254,7 @@
       }
     }
 
-    var body = parseBlock(flowContext);
+    const body = parseBlock(flowContext);
     flowContext.popScope();
     expect('end');
     if (options.scope) destroyScope();
@@ -2545,9 +2266,9 @@
   //
   //     Name {'.' Name} [':' Name]
 
-  function parseFunctionName(): IdentifierNode | MemberExpressionNode {
-    let base: IdentifierNode | MemberExpressionNode
-      , name: IdentifierNode
+  function parseFunctionName() {
+    let base: Identifier | MemberExpression
+      , name: Identifier
       , marker: Marker | null = null;
 
     if (trackLocations) marker = createLocationMarker();
@@ -2580,8 +2301,8 @@
   //
   //     fieldsep ::= ',' | ';'
 
-  function parseTableConstructor(flowContext: FlowContext): TableConstructorExpressionNode {
-    var fields = []
+  function parseTableConstructor(flowContext: FlowContext) {
+    let fields = []
       , key, value;
 
     while (true) {
@@ -2634,14 +2355,14 @@
   //          | '.' Name | ':' Name args | args }
   //
 
-  function parseExpression(flowContext: FlowContext): LuaExpression | null {
+  function parseExpression(flowContext: FlowContext): Expression | null {
     const expression = parseSubExpression(0, flowContext);
     return expression;
   }
 
   // Parse an expression expecting it to be valid.
 
-  function parseExpectedExpression(flowContext: FlowContext): LuaExpression {
+  function parseExpectedExpression(flowContext: FlowContext): Expression {
     const expression = parseExpression(flowContext);
     if (null == expression) raiseUnexpectedToken('<expression>', token);
     else return expression;
@@ -2658,7 +2379,7 @@
   // the expensive CompareICStub which took ~8% of the parse time.
 
   function binaryPrecedence(operator: string) {
-    var charCode = operator.charCodeAt(0)
+    const charCode = operator.charCodeAt(0)
       , length = operator.length;
 
     if (1 === length) {
@@ -2694,10 +2415,10 @@
   //
   //     exp ::= (unop exp | primary | prefixexp ) { binop exp }
 
-  function parseSubExpression(minPrecedence: number, flowContext: FlowContext): LuaExpression | null {
+  function parseSubExpression(minPrecedence: number, flowContext: FlowContext): Expression | null {
     let operator = token.value as string
     // The left-hand side in binary operations.
-      , expression: LuaExpression | null = null
+      , expression: Expression | null = null
       , marker: Marker | null = null;
 
     if (trackLocations) marker = createLocationMarker();
@@ -2708,7 +2429,7 @@
       next();
       const argument = parseSubExpression(10, flowContext);
       if (argument == null) raiseUnexpectedToken('<expression>', token);
-      expression = finishNode(ast.unaryExpression(operator, argument));
+      expression = finishNode(ast.unaryExpression(operator as UnaryOperator, argument));
     }
     if (null == expression) {
       // PrimaryExpression
@@ -2737,7 +2458,7 @@
       if (null == right) raiseUnexpectedToken('<expression>', token);
       // Push in the marker created before the loop to wrap its entirety.
       if (trackLocations) locations.push(marker);
-      expression = finishNode(ast.binaryExpression(operator, expression, right));
+      expression = finishNode(ast.binaryExpression(operator as BinaryOperator | LogicalOperator, expression, right));
 
     }
     return expression;
@@ -2749,8 +2470,8 @@
   //
   //     args ::= '(' [explist] ')' | tableconstructor | String
 
-  function parsePrefixExpressionPart(base: LuaExpression, marker: Marker | null, flowContext: FlowContext): LuaExpression | null {
-    let expression: LuaExpression, identifier: IdentifierNode;
+  function parsePrefixExpressionPart(base: Expression, marker: Marker | null, flowContext: FlowContext): Expression | null {
+    let expression: Expression, identifier: Identifier;
 
     if (TokenType.Punctuator === token.type) {
       switch (token.value) {
@@ -2773,21 +2494,21 @@
           // Once a : is found, this has to be a CallExpression, otherwise
           // throw an error.
           pushLocation(marker);
-          return parseCallExpression(base as MemberExpressionNode, flowContext) as LuaExpression;
+          return parseCallExpression(base as MemberExpression, flowContext) as Expression;
         case '(': case '{': // args
           pushLocation(marker);
-          return parseCallExpression(base as IdentifierNode | MemberExpressionNode, flowContext) as LuaExpression;
+          return parseCallExpression(base as Identifier | MemberExpression, flowContext) as Expression;
       }
     } else if (TokenType.StringLiteral === token.type) {
       pushLocation(marker);
-      return parseCallExpression(base as IdentifierNode | MemberExpressionNode, flowContext) as LuaExpression;
+      return parseCallExpression(base as Identifier | MemberExpression, flowContext) as Expression;
     }
 
     return null;
   }
 
-  function parsePrefixExpression(flowContext: FlowContext): LuaExpression | null {
-    let base: LuaExpression, name: string, marker: Marker | null = null;
+  function parsePrefixExpression(flowContext: FlowContext): Expression | null {
+    let base: Expression, name: string, marker: Marker | null = null;
 
     if (trackLocations) marker = createLocationMarker();
 
@@ -2796,7 +2517,7 @@
       name = token.value as string;
       base = parseIdentifier();
       // Set the parent scope.
-      if (options.scope) attachScope(base as IdentifierNode, scopeHasName(name));
+      if (options.scope) attachScope(base as Identifier, scopeHasName(name));
     } else if (consume('(')) {
       base = parseExpectedExpression(flowContext);
       expect(')');
@@ -2817,7 +2538,7 @@
 
   //     args ::= '(' [explist] ')' | tableconstructor | String
 
-  function parseCallExpression(base: IdentifierNode | MemberExpressionNode, flowContext: FlowContext) {
+  function parseCallExpression(base: Identifier | MemberExpression, flowContext: FlowContext) {
     if (TokenType.Punctuator === token.type) {
       switch (token.value) {
         case '(':
@@ -2828,8 +2549,8 @@
           next();
 
           // List of expressions
-          const expressions: (LuaExpression)[] = [];
-          let expression: LuaExpression | null = parseExpression(flowContext);
+          const expressions: (Expression)[] = [];
+          let expression: Expression | null = parseExpression(flowContext);
           if (null != expression) expressions.push(expression);
           while (consume(',')) {
             expression = parseExpectedExpression(flowContext);
@@ -2842,11 +2563,11 @@
         case '{':
           markLocation();
           next();
-          const table: TableConstructorExpressionNode = parseTableConstructor(flowContext);
+          const table: TableConstructorExpression = parseTableConstructor(flowContext);
           return finishNode(ast.tableCallExpression(base, table));
       }
     } else if (TokenType.StringLiteral === token.type) {
-      return finishNode(ast.stringCallExpression(base, parsePrimaryExpression(flowContext)));
+      return finishNode(ast.stringCallExpression(base, parsePrimaryExpression(flowContext) as StringLiteral));
     }
 
     raiseUnexpectedToken('function arguments', token);
@@ -2855,11 +2576,11 @@
   //     primary ::= String | Numeric | nil | true | false
   //          | functiondef | tableconstructor | '...'
 
-  function parsePrimaryExpression(flowContext: FlowContext): LiteralNode | FunctionDeclarationNode | TableConstructorExpressionNode | null {
-    var literals = TokenType.StringLiteral | TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.NilLiteral | TokenType.VarargLiteral
+  function parsePrimaryExpression(flowContext: FlowContext): PrimaryExpression | null {
+    const literals = TokenType.StringLiteral | TokenType.NumericLiteral | TokenType.BooleanLiteral | TokenType.NilLiteral | TokenType.VarargLiteral
       , value = token.value
-      , type = token.type
-      , marker: Marker | null = null;
+      , type = token.type;
+    let marker: Marker | null = null;
 
     if (trackLocations) marker = createLocationMarker();
 
@@ -2869,14 +2590,14 @@
 
     if (type & literals) {
       pushLocation(marker);
-      var raw = input.slice(token.range[0], token.range[1]);
+      const raw = input.slice(token.range[0], token.range[1]);
       next();
       return finishNode(ast.literal(type, value, raw));
     } else if (TokenType.Keyword === type && 'function' === value) {
       pushLocation(marker);
       next();
       if (options.scope) createScope();
-      return parseFunctionDeclaration(null);
+      return parseFunctionDeclaration(null) as FunctionExpression;
     } else if (consume('{')) {
       pushLocation(marker);
       return parseTableConstructor(flowContext);
@@ -2921,9 +2642,9 @@
       unicodeEscapes: true
     }
   };
- 
+
   /** workaround */
-  declare var exports: any;
+  declare const exports: any;
 
   /**
    * Export the main parser.
@@ -2943,7 +2664,7 @@
    *
    * Example:
    *
-   *     var parser = require('luaparser');
+   *     const parser = require('luaparser');
    *     parser.parse('i = 0');
    */
   export function parse(_input?: string | Partial<ParserOptions>, _options?: Partial<ParserOptions>) {
@@ -3003,7 +2724,7 @@
     // Initialize with a lookahead token.
     lookahead = lex();
 
-    var chunk = parseChunk();
+    const chunk = parseChunk();
     if (options.comments) chunk.comments = comments;
     if (options.scope) chunk.globals = globals;
 
