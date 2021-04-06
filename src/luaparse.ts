@@ -2428,7 +2428,7 @@
       markLocation();
       next();
       const argument = parseSubExpression(10, flowContext);
-      if (argument == null) raiseUnexpectedToken('<expression>', token);
+      if (argument == null) return raiseUnexpectedToken('<expression>', token);
       expression = finishNode(ast.unaryExpression(operator as UnaryOperator, argument));
     }
     if (null == expression) {
@@ -2455,7 +2455,7 @@
       if ('^' === operator || '..' === operator) --precedence;
       next();
       const right = parseSubExpression(precedence, flowContext);
-      if (null == right) raiseUnexpectedToken('<expression>', token);
+      if (null == right) return raiseUnexpectedToken('<expression>', token);
       // Push in the marker created before the loop to wrap its entirety.
       if (trackLocations) locations.push(marker);
       expression = finishNode(ast.binaryExpression(operator as BinaryOperator | LogicalOperator, expression, right));
