@@ -15,12 +15,13 @@
   "files": [
     "README.md",
     "LICENSE",
-    "luaparse.js",
-    "luaparse.d.ts",
+    "dist/**/*.js",
+    "dist/**/*.map",
+    "dist/**/*.d.ts",
     "bin/luaparse"
   ],
-  "types": "luaparse.d.ts",
-  "main": "luaparse.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": "./bin/luaparse",
   "man": "./docs/luaparse.1",
   "repository": {
